@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Phasmophobia Guide – Mobile Mini‑App</title>
+  <meta name="theme-color" content="#0b0f14" />
+  <style>
+    :root{
+      --bg:#0b0f14;--card:#111827;--muted:#6b7280;--text:#e5e7eb;--accent:#22d3ee;--accent-2:#60a5fa;--chip:#1f2937;--chip-on:#0ea5e9;
+      --radius:18px;--shadow:0 8px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(180deg,#0b0f14,#0b0f14 60%,#0a0d12);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif}
+    a{color:var(--accent)}
+    header{position:sticky;top:0;z-index:40;background:rgba(11,15,20,.75);backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid rgba(255,255,255,.05)}
+    .wrap{max-width:980px;margin:0 auto;padding:10px 16px}
+    .title{display:flex;align-items:center;gap:12px}
+    .badge{font-size:.75rem;color:#0e1620;background:linear-gradient(90deg,var(--accent),var(--accent-2));padding:4px 10px;border-radius:999px;font-weight:700}
+    nav{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 6px}
+    .tab{appearance:none;border:1px solid rgba(255,255,255,.08);background:#0d131a;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer}
+    .tab.active{border-color:transparent;background:linear-gradient(180deg,#0e1620,#0c1219);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 8px 30px rgba(0,0,0,.35)}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+    .search{flex:1;display:flex;align-items:center;gap:8px;background:#0d131a;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px}
+    .search input{flex:1;background:transparent;border:0;outline:none;color:var(--text)}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{padding:8px 10px;border-radius:999px;background:#1f2937;border:1px solid rgba(255,255,255,.08);font-size:.85rem;cursor:pointer}
+    .chip[data-on="1"]{background:rgba(14,165,233,.15);border-color:rgba(56,189,248,.5)}
+    section{display:none}
+    section.active{display:block}
+    .grid{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px}
+    @media(min-width:640px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(min-width:940px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    .card{background:linear-gradient(180deg,#0f1621,#0e1520);border:1px solid rgba(255,255,255,.06);border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,.35);padding:14px}
+    .card h3{margin:0 0 6px;font-size:1.05rem}
+    .meta{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}
+    .pill{font-size:.78rem;padding:6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:#0b1118;color:#e5e7eb}
+    .pill.accent{border-color:rgba(45,212,191,.35);background:rgba(16,185,129,.1)}
+    .pill.warn{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.12)}
+    .pill.bad{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.12)}
+    details{margin-top:8px}
+    summary{cursor:pointer;list-style:none}
+    summary::-webkit-details-marker{display:none}
+    .muted{color:#6b7280}
+    .footer{opacity:.7;text-align:center;padding:30px 0 40px;font-size:.85rem}
+    table{width:100%;border-collapse:collapse;border-spacing:0}
+    th,td{border-bottom:1px solid rgba(255,255,255,.08);padding:10px 8px;text-align:left;vertical-align:top}
+    th{color:#c7d2fe;font-weight:600}
+    .scroll-x{overflow:auto;border:1px solid rgba(255,255,255,.06);border-radius:12px}
+    .help{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:10px 12px;border:1px dashed rgba(255,255,255,.15);border-radius:12px;background:rgba(2,6,12,.35)}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0b1118;border:1px solid rgba(255,255,255,.12);padding:2px 6px;border-radius:6px}
+    .count{font-size:.8rem;color:#6b7280}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">
+        <div style="width:28px;height:28px;border-radius:8px;background:radial-gradient(120% 100% at 30% 30%, #22d3ee, transparent 60%),radial-gradient(120% 100% at 70% 70%, #60a5fa, transparent 60%), #0b1118;border:1px solid rgba(255,255,255,.12)"></div>
+        <div>
+          <div style="font-weight:800;letter-spacing:.2px">Phasmophobia Cheat Sheet</div>
+          <div class="muted" style="font-size:.82rem">Mobile mini‑app • search • evidence filters • collapsible refs</div>
+        </div>
+        <span class="badge" style="margin-left:auto">v1</span>
+      </div>
+      <nav id="tabs"></nav>
+    </div>
+  </header>
+  <main class="wrap">
+    <section id="ghosts" class="active">
+      <div class="toolbar">
+        <div class="search"><input id="q" placeholder="Search ghost, trait, evidence… (e.g. Raiju, DOTS, 70%)" /></div>
+        <div class="chips" id="evidenceChips"></div>
+      </div>
+      <div class="help">
+        <span class="muted">Tip:</span> Tap evidence chips to filter. Use <span class="kbd">#fast</span>, <span class="kbd">#early</span>, <span class="kbd">#fingerprints</span>, <span class="kbd">#no‑footprints</span>, <span class="kbd">#mimic</span> in search.
+        <span class="count" id="matchCount"></span>
+      </div>
+      <div class="grid" id="ghostGrid"></div>
+    </section>
+    <section id="cursed">
+      <div class="card">
+        <h3>Cursed Possessions – Quick Guide</h3>
+        <div class="muted" style="margin-bottom:10px">Effects, sanity costs, and hunt triggers.</div>
+        <div class="scroll-x">
+          <table>
+            <thead><tr><th>Item</th><th>How it works</th><th>Sanity Cost / Notes</th><th>Cursed Hunt Triggers</th></tr></thead>
+            <tbody id="cursedTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    <section id="mechanics">
+      <div class="grid">
+        <div class="card">
+          <h3>Hunt Start Sanity (Quick Reference)</h3>
+          <div class="scroll-x"><table><thead><tr><th>Ghost</th><th>Starts Hunt At</th><th>Notes</th></tr></thead><tbody id="sanityTable"></tbody></table></div>
+        </div>
+        <div class="card">
+          <h3>Hantu Speed vs. Temperature</h3>
+          <div class="scroll-x"><table><thead><tr><th>Temp</th><th>Speed</th><th>Notes</th></tr></thead><tbody id="hantuTable"></tbody></table></div>
+        </div>
+        <div class="card">
+          <h3>Line‑of‑Sight Speed Mechanics</h3>
+          <div class="scroll-x"><table><thead><tr><th>Ghost</th><th>LoS Speed Boost?</th><th>Notes</th></tr></thead><tbody id="losTable"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+    <section id="rewards">
+      <div class="grid">
+        <div class="card">
+          <h3>Photo Rewards</h3>
+          <div class="scroll-x"><table><thead><tr><th>Target</th><th>Unique</th><th>Duplicate</th><th>Label</th></tr></thead><tbody id="photoTable"></tbody></table></div>
+        </div>
+        <div class="card">
+          <h3>Video Rewards</h3>
+          <div class="scroll-x"><table><thead><tr><th>Target</th><th>Unique</th><th>Duplicate</th><th>Label</th></tr></thead><tbody id="videoTable"></tbody></table></div>
+        </div>
+        <div class="card">
+          <h3>Sound Rewards</h3>
+          <div class="scroll-x"><table><thead><tr><th>Target</th><th>Unique</th><th>Duplicate</th><th>Label</th></tr></thead><tbody id="soundTable"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+    <section id="maps">
+      <div class="card">
+        <h3>Maps (quick notes)</h3>
+        <p class="muted">Community layouts are often used in‑game. Add your own notes per map below.</p>
+        <div id="mapList" class="grid"></div>
+      </div>
+    </section>
+    <div class="footer">Crafted for fast mobile reference. Offline‑ready later as PWA if you want.</div>
+  </main>
+  <script>
+  const EVIDENCE = ["EMF 5","Spirit Box","Writing","Freezing","DOTS","Ghost Orbs","Fingerprints"];
+  const GHOSTS = [
+    {name:"Spirit", evid:["EMF 5","Spirit Box","Writing"], forced:null, traits:["No unique traits","Smudge prevents hunt for 180s"], sanity:"50%", speed:"~1.7 m/s", tags:["#baseline"]},
+    {name:"Wraith", evid:["EMF 5","Spirit Box","DOTS"], forced:null, traits:["No salt footprints","Can teleport to players"], sanity:"50%", speed:"~1.7 m/s", tags:["#no‑footprints"]},
+    {name:"Phantom", evid:["Spirit Box","DOTS","Freezing"], forced:null, traits:["Disappears in photos","-10% sanity per event","Slower flicker in hunts"], sanity:"50%", speed:"~1.7 m/s", tags:[]},
+    {name:"Poltergeist", evid:["Spirit Box","Writing","Fingerprints"], forced:null, traits:["Throws many items at once","Big sanity drops"], sanity:"50%", speed:"~1.7 m/s", tags:[]},
+    {name:"Banshee", evid:["DOTS","Writing","Fingerprints"], forced:null, traits:["Targets 1 player","Screams on parabolic","Ignores others in hunt"], sanity:"50% (targeted)", speed:"~1.7 m/s", tags:["#target"]},
+    {name:"Jinn", evid:["EMF 5","Freezing","Fingerprints"], forced:null, traits:["Fast with breaker ON & LoS","Power‑dependent ability"], sanity:"50%", speed:"up to 2.5 m/s (far, breaker ON)", tags:["#fast"]},
+    {name:"Mare", evid:["Spirit Box","Ghost Orbs","Writing"], forced:null, traits:["Early hunts in dark","Turns off lights"], sanity:"60% (dark) / 40% (light)", speed:"~1.7 m/s", tags:["#early"]},
+    {name:"Revenant", evid:["Writing","Freezing","Ghost Orbs"], forced:null, traits:["Very fast when chasing","Extremely slow without LoS"], sanity:"50%", speed:"1.0 → 3.0 m/s", tags:["#fast","#slow"]},
+    {name:"Demon", evid:["Writing","Freezing","Fingerprints"], forced:null, traits:["Earliest hunts","Crucifix range 5m","Chain hunts"], sanity:"70–100%", speed:"~1.7 m/s", tags:["#early"]},
+    {name:"Yurei", evid:["Freezing","Ghost Orbs","DOTS"], forced:null, traits:["Door slam drains sanity","Smudge traps in room briefly"], sanity:"50%", speed:"~1.7 m/s", tags:[]},
+    {name:"Oni", evid:["EMF 5","DOTS","Freezing"], forced:null, traits:["Super active","Fast flicker","No airball events"], sanity:"50%", speed:"~1.8 m/s", tags:["#active"]},
+    {name:"Yokai", evid:["Spirit Box","DOTS","Ghost Orbs"], forced:null, traits:["Triggered by voice","Can’t hear distant voices in hunt"], sanity:"up to 80% (if talking)", speed:"~1.5–1.7 m/s", tags:["#voice","#early"]},
+    {name:"Hantu", evid:["Freezing","Ghost Orbs","Fingerprints"], forced:"Freezing Temps", traits:["Faster in cold","Visible breath when power off","Never turns breaker ON"], sanity:"50%", speed:"1.4–2.7 m/s (cold)", tags:["#temp"]},
+    {name:"Goryo", evid:["EMF 5","DOTS","Fingerprints"], forced:"DOTS", traits:["DOTS only on camera","Roams less"], sanity:"50%", speed:"~1.7 m/s", tags:[]},
+    {name:"Myling", evid:["EMF 5","Writing","Fingerprints"], forced:null, traits:["Quieter footsteps in hunts","Loud on parabolic"], sanity:"50%", speed:"~1.7 m/s", tags:["#quiet"]},
+    {name:"Onryo", evid:["Spirit Box","Ghost Orbs","Freezing"], forced:null, traits:["Hunts after 3 flames go out","Fears fire"], sanity:"60% (with candles)", speed:"~1.7 m/s", tags:["#candle","#early"]},
+    {name:"The Twins", evid:["EMF 5","Spirit Box","Freezing"], forced:null, traits:["Two entities (fast/slow)","Desynced actions"], sanity:"50%", speed:"1.5 / 1.9 m/s", tags:["#dual"]},
+    {name:"Raiju", evid:["EMF 5","DOTS","Ghost Orbs"], forced:null, traits:["Fast near electronics","Disrupts gear from range"], sanity:"65% (near tech)", speed:"up to ~2.8 m/s", tags:["#fast","#electronics"]},
+    {name:"Obake", evid:["EMF 5","Ghost Orbs","Fingerprints"], forced:"Fingerprints", traits:["25% no prints","Unique prints (6‑finger, double)","Shapeshifts in hunts"], sanity:"50%", speed:"~1.7 m/s", tags:["#fingerprints"]},
+    {name:"The Mimic", evid:["Spirit Box","Freezing","Fingerprints"], forced:"Ghost Orbs (fake)", traits:["Mimics other ghosts","Always shows Orbs"], sanity:"Varies (imitates)", speed:"Varies", tags:["#mimic"]},
+    {name:"Moroi", evid:["Spirit Box","Writing","Freezing"], forced:"Spirit Box", traits:["Curses via Spirit Box","Faster as sanity drops","Sees thru walls if cursed"], sanity:"50%", speed:"up to ~3.71 m/s (low sanity)", tags:["#fast"]},
+    {name:"Deogen", evid:["Spirit Box","Writing","DOTS"], forced:"Spirit Box", traits:["Always knows location","Fast far, slow near","Loud breathing"], sanity:"40%", speed:"3.0 → 0.4 m/s", tags:["#unique"]},
+    {name:"Thaye", evid:["Writing","Ghost Orbs","DOTS"], forced:null, traits:["Strong early, weakens over time","Ages near players"], sanity:"75% → 45% (ages)", speed:"2.75 → 1.0 m/s", tags:["#early","#ages"]},
+    {name:"Shade", evid:["EMF 5","Writing","Freezing"], forced:null, traits:["Shy, passive","No hunts/events near players"], sanity:"35%", speed:"~1.7 m/s", tags:["#shy"]}
+  ];
+  const CURSED = [
+    {item:"Haunted Mirror", how:"Shows ghost room live feed", cost:"7.5%/s or ≥20% total", trigger:"Breaks at <20% or 0% sanity → cursed hunt"},
+    {item:"Monkey Paw", how:"Speak wishes for strong effects + downsides", cost:"Varies by wish (e.g., +50% sanity / heavy penalty)", trigger:"Most wishes end with a cursed hunt"},
+    {item:"Music Box", how:"Plays song; ghost sings if within 20m", cost:"~2.6%/s within 3m; full song ~77%", trigger:"Thrown/touched/0% sanity"},
+    {item:"Ouija Board", how:"Ask questions; say ‘Goodbye’ to end safely", cost:"Where are you? 50% • Bone 20% • Age 5% …", trigger:"Leaving without goodbye / at 0% → breaks + hunt"},
+    {item:"Summoning Circle", how:"Light 5 candles to manifest ghost", cost:"~16% per candle (solo 80%)", trigger:"5s after appear (instant if <16% sanity)"},
+    {item:"Voodoo Doll", how:"Press pins to force interactions", cost:"5% per pin (heart=10%)", trigger:"Heart pin or at 0% sanity"},
+    {item:"Tarot Cards", how:"Draw 10 random powerful cards", cost:"Wheel ±25%, Sun/Moon 100%/0%, etc.", trigger:"Death card; Fool overrides during hunts"}
+  ];
+  const HUNT_SANITY = [
+    {ghost:"Demon", level:"100–70%", notes:"Earliest hunter"},
+    {ghost:"Thaye", level:"75% → 45%", notes:"Ages weaker"},
+    {ghost:"Banshee", level:"<50% target", notes:"Team sanity irrelevant"},
+    {ghost:"Yokai", level:"up to 80% (if talking)", notes:"Voice triggered"},
+    {ghost:"Raiju", level:"50–65%", notes:"Near electronics"},
+    {ghost:"Most ghosts", level:"50%", notes:"Baseline"},
+    {ghost:"Shade", level:"35%", notes:"Very shy"}
+  ];
+  const HANTU_SPEED = [
+    {t:"< 0°C (Freezing)", s:"~2.5 m/s", n:"Very fast"},
+    {t:"1–5°C", s:"~2.3 m/s", n:""},
+    {t:"6–10°C", s:"~2.1 m/s", n:""},
+    {t:"11–15°C", s:"~1.9 m/s", n:""},
+    {t:"16–20°C", s:"~1.7 m/s", n:""},
+    {t:"> 21°C", s:"~1.5 m/s", n:"Very slow"}
+  ];
+  const LOS = [
+    {ghost:"All normal ghosts", boost:"Yes (to ~2.7 m/s)", notes:"After ~3s of LoS"},
+    {ghost:"Revenant", boost:"No", notes:"Fast only while actively chasing"},
+    {ghost:"Hantu", boost:"No", notes:"Temp‑based only"},
+    {ghost:"Moroi", boost:"Yes", notes:"Up to ~3.71 m/s at 0%"},
+    {ghost:"Raiju", boost:"Yes", notes:"Starts fast near electronics"},
+    {ghost:"Thaye", boost:"Yes", notes:"Slows with age"},
+    {ghost:"Deogen", boost:"No", notes:"Always knows location; slows when close"}
+  ];
+  const MAPS = [
+    "6 Tanglewood Drive","13 Willow Street","10 Ridgeview Court","42 Edgefield Road","Bleasdale Farmhouse","Grafton Farmhouse","Camp Woodwind","Maple Lodge Campsite","Point Hope Lighthouse","Prison","Brownstone High School","Sunny Meadows (Full)","Sunny Meadows – Restricted (Male)","Sunny Meadows – Restricted (Female)","Sunny Meadows – Restricted (Hospital)","Sunny Meadows – Restricted (Courtyard)"
+  ];
+  const PHOTO_REWARDS = [
+    ["DOTS Ghost","$10","$2","D.O.T.S Ghost"],
+    ["Ghost (Full Form)","$10","$2","Ghost"],
+    ["Shadow/Translucent Ghost","$10","$2","Shadow/Translucent"],
+    ["Ghost Mist","$10","-","Mist Form"],
+    ["Obake Fingerprints","$10","$2","Obake Fingerprint"],
+    ["Bone","$5","-","Bone"],
+    ["Used Crucifix","$5","$1","Burned Crucifix"],
+    ["Dead Body","$5","$1","Dead Body"],
+    ["Dirty Water","$5","$1","Dirty Water"],
+    ["EMF Reading","$5","-","EMF Reading"],
+    ["UV Fingerprint / Footprints","$5","$1","Fingerprints / Footprints"],
+    ["Freezing Temps","$5","-","Freezing Temperatures"],
+    ["Ghost Writing","$5","$1","Ghost Writing"],
+    ["Object levitating","$5","-","Interaction"],
+    ["All cursed items (photo)","$5","$1","Item name"]
+  ];
+  const VIDEO_REWARDS = [
+    ["Hunting Ghost","$20","$4","Hunting Ghost"],
+    ["Burning Crucifix","$10","$2","Burned Crucifix"],
+    ["Player killed","$10","$2","Dead Body"],
+    ["DOTS / Ghost / Shadow","$10","$2","DOTS/Ghost/Shadow"],
+    ["Mist / Orbs / Writing","$10","$2","Mist/Orbs/Writing"],
+    ["Dirty Water / Salt / Door / Flame / Lights / Switch","$5","$1","Various"],
+    ["Ouija response","$5","-","Ouija Board"]
+  ];
+  const SOUND_REWARDS = [
+    ["Hunting Ghost","$15","$3","Hunting Ghost"],
+    ["Deogen breathing","$10","$2","Deogen Breathing"],
+    ["EMF 5 reading","$10","$2","EMF 5 Reading"],
+    ["Ghost event / writing / mist","$10","$2","Ghost Event/Writing/Mist"],
+    ["Spirit Box response","$10","$2","Spirit Box Response"],
+    ["Banshee wail","$5","$1","Banshee Scream"],
+    ["Various paranormal sounds","$5","$1","Various"]
+  ];
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const tabs = [
+    {id:"ghosts", label:"Ghosts"},
+    {id:"cursed", label:"Cursed Items"},
+    {id:"mechanics", label:"Mechanics"},
+    {id:"rewards", label:"Rewards"},
+    {id:"maps", label:"Maps"}
+  ];
+  function buildTabs(){
+    const nav = document.querySelector("#tabs");
+    tabs.forEach(t=>{
+      const b = document.createElement('button');
+      b.className = 'tab' + (t.id==='ghosts'?' active':'');
+      b.textContent = t.label;
+      b.onclick = ()=>activate(t.id);
+      nav.appendChild(b);
+    });
+  }
+  function activate(id){
+    document.querySelectorAll('#tabs .tab').forEach((el,i)=> el.classList.toggle('active', tabs[i].id===id));
+    document.querySelectorAll('main section').forEach(s=> s.classList.toggle('active', s.id===id));
+    if(id==='ghosts') setTimeout(()=> document.querySelector('#q').focus(), 50);
+    location.hash = id;
+  }
+  function buildEvidenceChips(){
+    const box = document.querySelector('#evidenceChips');
+    EVIDENCE.forEach(ev=>{
+      const span = document.createElement('button');
+      span.className='chip'; span.textContent=ev; span.dataset.on='0';
+      span.onclick=()=>{ span.dataset.on = span.dataset.on==='1'?'0':'1'; renderGhosts(); };
+      box.appendChild(span);
+    });
+  }
+  function pill(txt, cls=''){ return `<span class="pill ${cls}">${txt}</span>` }
+  function renderGhosts(){
+    const q = document.querySelector('#q').value.trim().toLowerCase();
+    const need = Array.from(document.querySelectorAll('#evidenceChips .chip')).filter(c=>c.dataset.on==='1').map(c=>c.textContent);
+    let list = GHOSTS.filter(g=> need.every(n=> g.evid.includes(n)) );
+    if(q){
+      const qs = q.split(/\s+/);
+      list = list.filter(g=>{
+        const hay = [g.name, ...g.evid, g.forced||'', ...(g.traits||[]), g.sanity||'', g.speed||'', ...(g.tags||[])].join(' ').toLowerCase();
+        return qs.every(word=> hay.includes(word));
+      });
+    }
+    document.querySelector('#matchCount').textContent = `Matches: ${list.length}/${GHOSTS.length}`;
+    const html = list.map(g=>{
+      const ev = g.evid.map(e=>pill(e)).join(' ');
+      const fx = g.forced? pill('Forced: '+g.forced,'warn'):'';
+      const san = g.sanity? pill('Hunt: '+g.sanity,'accent'):'';
+      const spd = g.speed? pill('Speed: '+g.speed):'';
+      const tags = (g.tags||[]).map(t=>pill(t,'muted')).join(' ');
+      const traits = (g.traits||[]).join(' • ');
+      return `<div class="card"><h3>${g.name}</h3>
+        <div class="meta">${ev} ${fx} ${san} ${spd} ${tags}</div>
+        <details><summary class="muted">Show traits & testing</summary>
+          <div style="margin-top:8px">${traits || '<span class="muted">—</span>'}</div>
+        </details>
+      </div>`;
+    }).join('');
+    document.querySelector('#ghostGrid').innerHTML = html || `<div class="card"><h3>No matches</h3><div class="muted">Try removing some evidence filters or clearing search.</div></div>`;
+  }
+  function fillTable(el, rows){ el.innerHTML = rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join(''); }
+  function renderCursed(){ document.querySelector('#cursedTable').innerHTML = CURSED.map(c=>`<tr><td>${c.item}</td><td>${c.how}</td><td>${c.cost}</td><td>${c.trigger}</td></tr>`).join(''); }
+  function renderMechanics(){
+    fillTable(document.querySelector('#sanityTable'), HUNT_SANITY.map(x=>[x.ghost,x.level,x.notes]));
+    fillTable(document.querySelector('#hantuTable'), HANTU_SPEED.map(x=>[x.t,x.s,x.n]));
+    fillTable(document.querySelector('#losTable'), LOS.map(x=>[x.ghost,x.boost,x.notes]));
+  }
+  function renderRewards(){
+    fillTable(document.querySelector('#photoTable'), PHOTO_REWARDS);
+    fillTable(document.querySelector('#videoTable'), VIDEO_REWARDS);
+    fillTable(document.querySelector('#soundTable'), SOUND_REWARDS);
+  }
+  function renderMaps(){
+    const el = document.querySelector('#mapList');
+    el.innerHTML = MAPS.map(m=>`<div class="card"><h3>${m}</h3><details><summary class="muted">Notes</summary><div contenteditable="true" style="margin-top:6px;min-height:40px;padding:8px;border:1px dashed rgba(255,255,255,.15);border-radius:8px">Add tips: breaker, cursed spawns, safe spots…</div></details></div>`).join('');
+  }
+  window.addEventListener('hashchange', ()=>{ const id = location.hash.replace('#',''); if(tabs.find(t=>t.id===id)) activate(id); });
+  buildTabs(); buildEvidenceChips(); renderGhosts(); renderCursed(); renderMechanics(); renderRewards(); renderMaps(); setTimeout(()=>document.querySelector('#q').focus(), 150);
+  </script>
+</body>
+</html>
