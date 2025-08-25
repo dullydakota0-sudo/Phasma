@@ -1,0 +1,1 @@
+{"name": "phasmophobia-cheat-sheet","version": "1.0.0","private": true,"description": "An updated Phasmophobia cheat sheet web app.","scripts": {"start": "react-scripts start","build": "react-scripts build","test": "react-scripts test"},"dependencies": {"react": "^18.2.0","react-dom": "^18.2.0","react-scripts": "^5.0.1"}}
