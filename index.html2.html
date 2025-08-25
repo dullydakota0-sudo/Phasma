@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Phasmo Helper – Ty‑style</title>
+  <meta name="description" content="Mobile-first Phasmophobia helper with BPM Finder, compact/adaptive ghost cards, and a zoomable maps viewer." />
+  <link rel="icon" href="favicon.ico"/>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <!-- Panzoom (pinch + pan zoom) -->
+  <script src="https://unpkg.com/@panzoom/panzoom@9.4.0/dist/panzoom.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0e0f12; /* rich near-black */
+      --bg-2: #16181d;
+      --card: #1b1e24;
+      --text: #f6f7f9;
+      --muted: #9aa3b2;
+      --brand: #8bd0ff; /* soft cyan */
+      --accent: #ffc857; /* warm gold */
+      --danger: #ff6b6b;
+      --ok: #41d37e;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(1200px 700px at 80% -100px, #1d2430 0, transparent 70%), var(--bg);
+      color: var(--text); overflow-x: hidden;
+    }
+    a { color: var(--brand); text-decoration: none; }
+    header {
+      position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(8px);
+      background: rgba(14,15,18,.65); border-bottom: 1px solid #23262d;
+    }
+    .wrap { width: min(1100px, 100%); margin: 0 auto; padding: 16px; }
+    .bar { display:flex; align-items:center; gap: 14px; }
+    .title { font-weight: 800; letter-spacing:.2px; }
+    .pill {
+      padding: 6px 10px; border-radius: 999px; background: #232733; color: var(--muted);
+      font-size: 12px; border: 1px solid #2a2f3b;
+    }
+    nav { display:flex; gap:8px; margin-left:auto; }
+    nav button { 
+      background: #22262f; color: var(--text); border:1px solid #303744; 
+      padding: 10px 12px; border-radius: 12px; cursor:pointer; font-weight:600;
+    }
+    nav button.active { background: var(--brand); color:#0a0c0f; border-color: transparent; }
+
+    main { padding: 18px 0 80px; }
+    section { display:none; }
+    section.active { display:block; }
+
+    /* Cards grid */
+    .grid { 
+      display:grid; gap:12px; 
+      grid-template-columns: repeat( auto-fill, minmax(220px, 1fr) );
+    }
+    .card { background: var(--card); border: 1px solid #2a2f3b; border-radius: var(--radius); box-shadow: var(--shadow); }
+    .card .inner { padding: 14px; }
+
+    /* Ghost cards */
+    .ghost-card { position: relative; overflow: hidden; }
+    .ghost-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .ghost-name { font-weight:800; }
+    .ghost-badges { display:flex; flex-wrap:wrap; gap:6px; }
+    .badge { font-size: 11px; padding: 4px 8px; border-radius: 10px; background:#242a36; color:#cfe3ff; border:1px solid #2f3746; }
+    .ghost-body { margin-top: 10px; color: var(--muted); font-size: 14px; line-height: 1.4; }
+    .ghost-footer { margin-top: 10px; display:flex; gap:8px; align-items:center; }
+
+    /* Compact mode */
+    .compact .ghost-body, .compact .ghost-footer { display: none; }
+    .compact .ghost-badges .badge { padding: 4px 6px; font-size: 10px; }
+
+    /* Toolbar */
+    .toolbar { display:flex; flex-wrap: wrap; gap:8px; margin-bottom: 14px; }
+    .toolbar .seg { background:#1a1f29; border: 1px solid #2b3342; border-radius: 12px; padding: 8px; display:flex; gap:8px; align-items:center; }
+    .toolbar label { font-size: 13px; color: var(--muted); }
+
+    /* BPM Finder */
+    .bpm-card { text-align:center; }
+    .bpm-display { font-size: 38px; font-weight: 800; letter-spacing:.5px; }
+    .bpm-sub { font-size: 12px; color: var(--muted); margin-top: -6px; }
+    .tap-btn { 
+      margin-top: 12px; width: 100%; padding: 16px; border-radius: 14px; cursor: pointer; 
+      background: linear-gradient(180deg, #2a3140 0, #222834 100%); border: 1px solid #2f3746; 
+      font-weight: 800; text-transform: uppercase; letter-spacing: .6px;
+    }
+    .tap-btn:active { transform: scale(.995); }
+    .bpm-actions { display:flex; gap:8px; margin-top:10px; }
+    .btn { flex:1; padding: 10px 12px; border-radius: 10px; border: 1px solid #2f3746; background:#1c2230; color: var(--text); cursor:pointer; }
+
+    /* Maps */
+    .map-card img { width:100%; aspect-ratio: 16/10; object-fit: cover; border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); display:block; }
+    .map-card h3 { padding: 12px 14px 0; margin:0; font-size: 16px; }
+    .map-credit { margin-top: 18px; color: var(--muted); font-size: 12px; text-align:center; }
+
+    /* Overlay Viewer */
+    .overlay { position: fixed; inset: 0; background: rgba(5,7,9,.92); display:none; align-items:center; justify-content:center; z-index: 9999; }
+    .overlay .frame { max-width: 96vw; max-height: 90vh; width: 96vw; height: 90vh; border-radius: 18px; background:#0b0e12; border: 1px solid #2b3342; overflow: hidden; box-shadow: var(--shadow); }
+    .overlay .topbar { display:flex; align-items:center; justify-content:space-between; padding: 8px 12px; border-bottom:1px solid #222a36; background:#121721; }
+    .overlay .topbar .title { font-size: 14px; font-weight: 700; color:#dfe8ff; }
+    .overlay .topbar .x { background:#1c2230; border:1px solid #2f3746; color:#cbd6ee; padding:6px 10px; border-radius: 10px; cursor:pointer; }
+    .pz-outer { width:100%; height: calc(100% - 42px); position:relative; background:#0b0e12; }
+    .pz-inner { width:100%; height:100%; display:grid; place-items:center; touch-action: none; }
+    .pz-inner img { max-width: none; width: 1600px; height: auto; image-rendering: auto; }
+
+    footer { border-top: 1px solid #23262d; padding: 16px; color: var(--muted); text-align:center; }
+
+    /* Mobile niceties */
+    @media (max-width: 640px) {
+      nav { gap: 6px; }
+      nav button { padding: 8px 10px; border-radius: 10px; }
+      .grid { grid-template-columns: repeat( auto-fill, minmax(160px, 1fr) ); }
+      .pz-inner img { width: 1200px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap bar">
+      <div class="title">Phasmo Helper</div>
+      <span class="pill">Updated for Aug 12, 2025</span>
+      <nav>
+        <button class="tab active" data-tab="ghosts">Ghosts</button>
+        <button class="tab" data-tab="bpm">BPM Finder</button>
+        <button class="tab" data-tab="maps">Maps</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- TOOLBAR (global) -->
+    <div class="toolbar">
+      <div class="seg">
+        <label><input type="checkbox" id="compactToggle"> Compact / Adaptive Ghost Cards</label>
+      </div>
+      <div class="seg">
+        <label>Ghost Speed Modifier&nbsp;
+          <select id="speedMod">
+            <option value="0.5">50%</option>
+            <option value="0.75">75%</option>
+            <option value="1" selected>100%</option>
+            <option value="1.25">125%</option>
+            <option value="1.5">150%</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <!-- GHOSTS -->
+    <section id="ghosts" class="active">
+      <div id="ghostGrid" class="grid"></div>
+    </section>
+
+    <!-- BPM FINDER -->
+    <section id="bpm">
+      <div class="grid">
+        <div class="card bpm-card">
+          <div class="inner">
+            <div class="bpm-display"><span id="bpmVal">0</span> BPM</div>
+            <div class="bpm-sub">Tap along with footsteps. Speed calculated using average interval.
+              <br><small>Speed (m/s): <strong id="speedVal">0.00</strong> (modifier applied)</small>
+            </div>
+            <button class="tap-btn" id="tapBtn">Tap</button>
+            <div class="bpm-actions">
+              <button class="btn" id="resetBtn">Reset</button>
+              <button class="btn" id="undoBtn">Undo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAPS -->
+    <section id="maps">
+      <div id="mapsGrid" class="grid"></div>
+      <div class="map-credit">Map layouts © their respective creators. Thanks to community cartographers such as <a href="#" onclick="alert('Please add proper attribution link in footer (e.g., Karotte maps).')">Karotte</a>. Add high‑res images to <code>/maps</code> as referenced below.</div>
+    </section>
+  </main>
+
+  <!-- MAP OVERLAY VIEWER -->
+  <div id="overlay" class="overlay" aria-hidden="true" role="dialog">
+    <div class="frame">
+      <div class="topbar">
+        <div class="title" id="overlayTitle">Map</div>
+        <button class="x" id="closeOverlay">Close ✕</button>
+      </div>
+      <div class="pz-outer">
+        <div class="pz-inner" id="panzoom">
+          <img id="overlayImg" alt="Map" src=""/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Phasmo Helper (unofficial). Updated for the Aug 12, 2025 patch. Assets and trademarks belong to their respective owners. 
+    If you use community map images (e.g., Karotte), keep their credits intact.
+  </footer>
+
+  <script>
+    // --- Simple tab handling ---
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(btn => btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    }));
+
+    // --- Compact toggle ---
+    const compactToggle = document.getElementById('compactToggle');
+    const ghostGrid = document.getElementById('ghostGrid');
+    compactToggle.addEventListener('change', () => {
+      ghostGrid.classList.toggle('compact', compactToggle.checked);
+    });
+
+    // --- Ghost dataset (lean). You can expand this list safely.
+    // If a ghost list update happens, simply add to this array. Structure supports compact mode.
+    const GHOSTS = [
+      { name: 'Spirit', evidence:['EMF 5','Spirit Box','Ghost Writing'], notes:'Average speed. No special hunt trigger. Longer smudge effect.' },
+      { name: 'Wraith', evidence:['EMF 5','DOTS','Spirit Box'], notes:'Does not step in salt; teleports to players occasionally.' },
+      { name: 'Phantom', evidence:['Spirit Box','Fingerprints','DOTS'], notes:'Disappears longer when photo taken; sanity drain on manifestation.' },
+      { name: 'Poltergeist', evidence:['Spirit Box','Fingerprints','Ghost Writing'], notes:'Throws many items rapidly; item throw tests (0‑evidence).' },
+      { name: 'Banshee', evidence:['Fingerprints','Ghost Orbs','DOTS'], notes:'Targets a single player; often sings; special parabolic mic cues.' },
+      { name: 'Jinn', evidence:['EMF 5','Fingerprints','Freezing'], notes:'Faster with line of sight and power on; weak to breaker off.' },
+      { name: 'Mare', evidence:['Spirit Box','Ghost Orbs','Ghost Writing'], notes:'Prefers darkness; turns lights off and hunts earlier in dark.' },
+      { name: 'Revenant', evidence:['Ghost Orbs','Ghost Writing','Freezing'], notes:'Very slow when no LoS; very fast when it has LoS to a player.' },
+      { name: 'Shade', evidence:['EMF 5','Ghost Writing','Freezing'], notes:'Shy; less activity with players nearby; hard to provoke events.' },
+      { name: 'Demon', evidence:['Fingerprints','Ghost Writing','Freezing'], notes:'Earliest hunts; reduced smudge cooldown; aggressive.' },
+      { name: 'Yurei', evidence:['Ghost Orbs','Freezing','DOTS'], notes:'Strong sanity drain abilities; door slam ability.' },
+      { name: 'Oni', evidence:['EMF 5','Freezing','DOTS'], notes:'Visible more during events; throws strongly; no shadow form.' },
+      { name: 'Hantu', evidence:['Fingerprints','Ghost Orbs','Freezing'], notes:'Faster in cold; slower in warm; breath mist during hunts.' },
+      { name: 'Goryo', evidence:['EMF 5','Fingerprints','DOTS'], notes:'DOTS only on camera and when no one nearby.' },
+      { name: 'Myling', evidence:['EMF 5','Fingerprints','Ghost Writing'], notes:'Quieter footsteps; audio test timer helpful.' },
+      { name: 'Onryo', evidence:['Spirit Box','Ghost Orbs','Freezing'], notes:'Hunts around fire/candles logic; uses candle count.' },
+      { name: 'The Twins', evidence:['EMF 5','Spirit Box','Freezing'], notes:'Two activity points; speed variance during hunts.' },
+      { name: 'Raiju', evidence:['EMF 5','Ghost Orbs','DOTS'], notes:'Faster near electronics; disrupts equipment.' },
+      { name: 'Obake', evidence:['EMF 5','Fingerprints','Ghost Orbs'], notes:'Six‑finger prints chance; prints fade faster.' },
+      { name: 'The Mimic', evidence:['Spirit Box','Fingerprints','Freezing'], notes:'Mimics others; always spawns Ghost Orbs as 4th hidden evidence.' },
+      { name: 'Moroi', evidence:['Spirit Box','Ghost Writing','Freezing'], notes:'Curses player via Spirit Box; faster at lower sanity.' },
+      { name: 'Deogen', evidence:['Spirit Box','Ghost Writing','DOTS'], notes:'Always knows location; very slow when close, fast at range.' },
+      { name: 'Thaye', evidence:['Ghost Orbs','Ghost Writing','DOTS'], notes:'Ages over time; weaker and slower later in contract.' },
+      // Add newly released ghosts here if needed.
+    ];
+
+    function badge(txt){
+      const span = document.createElement('span');
+      span.className = 'badge';
+      span.textContent = txt; return span;
+    }
+
+    function renderGhosts(){
+      ghostGrid.innerHTML = '';
+      GHOSTS.forEach(g => {
+        const card = document.createElement('div');
+        card.className = 'card ghost-card';
+        card.innerHTML = `
+          <div class="inner">
+            <div class="ghost-header">
+              <div class="ghost-name">${g.name}</div>
+              <div class="ghost-badges"></div>
+            </div>
+            <div class="ghost-body">${g.notes || ''}</div>
+            <div class="ghost-footer">
+              <small class="muted">Evidence:</small>
+            </div>
+          </div>`;
+        const bwrap = card.querySelector('.ghost-badges');
+        (g.evidence||[]).forEach(e => bwrap.appendChild(badge(e)));
+        const footer = card.querySelector('.ghost-footer');
+        (g.evidence||[]).forEach(e => footer.appendChild(badge(e)));
+        ghostGrid.appendChild(card);
+      });
+    }
+    renderGhosts();
+
+    // --- BPM Finder logic ---
+    const bpmVal = document.getElementById('bpmVal');
+    const speedVal = document.getElementById('speedVal');
+    const tapBtn = document.getElementById('tapBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const speedMod = document.getElementById('speedMod');
+
+    let taps = [];
+    let lastTap = 0;
+
+    function calc(){
+      if (taps.length < 2){ bpmVal.textContent = '0'; speedVal.textContent = '0.00'; return; }
+      // average interval in ms
+      const intervals = [];
+      for (let i=1;i<taps.length;i++) intervals.push(taps[i]-taps[i-1]);
+      const avg = intervals.reduce((a,b)=>a+b,0)/intervals.length;
+      const bpm = 60000/avg; // beats per minute
+      bpmVal.textContent = Math.round(bpm);
+      // Convert BPM to steps/sec then to m/s. In Ty’s app, a mapping exists; here we use a simple proportion (tweakable).
+      const stepsPerSec = bpm/60; // simplistic
+      const baseSpeed = stepsPerSec * 1.6; // tweak scale factor to match footstep cadence ≈ speed
+      const mod = parseFloat(speedMod.value || '1');
+      speedVal.textContent = (baseSpeed * mod).toFixed(2);
+    }
+
+    function tap(){
+      const now = performance.now();
+      if (lastTap && now-lastTap > 2500) { // timeout old run
+        taps = [];
+      }
+      taps.push(now);
+      lastTap = now;
+      calc();
+    }
+
+    tapBtn.addEventListener('click', tap);
+    document.addEventListener('keydown', (e)=>{ if(e.key.toLowerCase()==='f') tap(); });
+    resetBtn.addEventListener('click', ()=>{ taps=[]; lastTap=0; calc(); });
+    undoBtn.addEventListener('click', ()=>{ taps.pop(); calc(); });
+    speedMod.addEventListener('change', calc);
+
+    // --- Maps list & viewer ---
+    const MAPS = [
+      { id:'tanglewood', name:'6 Tanglewood Drive', thumb:'maps/tanglewood_thumb.jpg', full:'maps/tanglewood.jpg' },
+      { id:'willow', name:'13 Willow Street', thumb:'maps/willow_thumb.jpg', full:'maps/willow.jpg' },
+      { id:'edgefield', name:'42 Edgefield Road', thumb:'maps/edgefield_thumb.jpg', full:'maps/edgefield.jpg' },
+      { id:'ridgeview', name:'10 Ridgeview Court', thumb:'maps/ridgeview_thumb.jpg', full:'maps/ridgeview.jpg' },
+      { id:'bleasdale', name:'Bleasdale Farmhouse', thumb:'maps/bleasdale_thumb.jpg', full:'maps/bleasdale.jpg' },
+      { id:'grafton', name:'Grafton Farmhouse', thumb:'maps/grafton_thumb.jpg', full:'maps/grafton.jpg' },
+      { id:'campwoodwind', name:'Camp Woodwind', thumb:'maps/campwoodwind_thumb.jpg', full:'maps/campwoodwind.jpg' },
+      { id:'maple', name:'Maple Lodge Campsite', thumb:'maps/maple_thumb.jpg', full:'maps/maple.jpg' },
+      { id:'highschool', name:'Brownstone High School', thumb:'maps/highschool_thumb.jpg', full:'maps/highschool.jpg' },
+      { id:'prison', name:'Prison', thumb:'maps/prison_thumb.jpg', full:'maps/prison.jpg' },
+      { id:'sunny', name:'Sunny Meadows Institution', thumb:'maps/sunny_thumb.jpg', full:'maps/sunny.jpg' },
+      { id:'sunnyrestricted', name:'Sunny Meadows (Restricted)', thumb:'maps/sunny_restricted_thumb.jpg', full:'maps/sunny_restricted.jpg' },
+      // Add more/new maps here as they release
+    ];
+
+    const mapsGrid = document.getElementById('mapsGrid');
+    function renderMaps(){
+      mapsGrid.innerHTML = '';
+      MAPS.forEach(m => {
+        const c = document.createElement('div');
+        c.className = 'card map-card';
+        c.innerHTML = `<h3>${m.name}</h3><img src="${m.thumb}" alt="${m.name}">`;
+        c.addEventListener('click', ()=> openMap(m));
+        mapsGrid.appendChild(c);
+      });
+    }
+    renderMaps();
+
+    // Overlay + Panzoom
+    const overlay = document.getElementById('overlay');
+    const overlayImg = document.getElementById('overlayImg');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const closeOverlay = document.getElementById('closeOverlay');
+    let pzCleanup = null;
+
+    function openMap(m){
+      overlayImg.src = m.full;
+      overlayTitle.textContent = m.name;
+      overlay.style.display = 'flex';
+      // init panzoom on container for smooth pinch
+      const elem = document.getElementById('panzoom');
+      const pz = Panzoom(elem, { maxScale: 6, minScale: 1, contain: 'outside' });
+      // Enable wheel + pinch zoom
+      elem.parentElement.addEventListener('wheel', pz.zoomWithWheel);
+      pzCleanup = () => { try { elem.parentElement.removeEventListener('wheel', pz.zoomWithWheel); } catch(_){} };
+    }
+
+    function close(){
+      overlay.style.display = 'none';
+      overlayImg.src = '';
+      if (pzCleanup) pzCleanup();
+      pzCleanup = null;
+    }
+
+    closeOverlay.addEventListener('click', close);
+    overlay.addEventListener('click', (e)=>{
+      if (e.target === overlay) close();
+    });
+
+    // --- PWA-ish mobile niceties (optional) ---
+    // Prevent iOS rubber-band inside overlay while zooming
+    document.addEventListener('gesturestart', (e)=> e.preventDefault());
+  </script>
+</body>
+</html>
